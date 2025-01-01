@@ -12,9 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # PYTHONPATHを設定
-ENV PYTHONPATH=/app
+ENV FLASK_APP=run:app
 
 EXPOSE 5000
 
 # Flaskアプリケーションの起動
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+

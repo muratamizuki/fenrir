@@ -57,7 +57,7 @@ const ParentComponent = () => {
     console.log("送信データ:", payload);
 
     try {
-      const response = await fetch("http://localhost:5000/submit", {
+      const response = await fetch("http://localhost:5000//hotpepper-restaurants", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,7 +77,7 @@ const ParentComponent = () => {
 
   return (
     <div>
-      <h1>フォーム</h1>
+      <h1>検索</h1>
       <CheckboxGroup
         options={checkboxOptions}
         checkedStates={checkedStates}
