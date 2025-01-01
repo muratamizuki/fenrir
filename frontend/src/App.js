@@ -1,11 +1,10 @@
-import logo from './logo.svg';
-import './App.css';
-import SimpleCheckbox from './components/checkbox';
+import React from "react";
+import Homepage from "./pages/Homepage";
 
 function App() {
   return (
     <div>
-      <SimpleCheckbox/>
+      <Homepage />
     </div>
   );
 }
