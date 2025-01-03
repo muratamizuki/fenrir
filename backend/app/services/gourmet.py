@@ -8,26 +8,25 @@
 :return: 店舗情報のリスト
 """
 
-import requests
-from fastapi import HTTPException
 
 import requests
 from fastapi import HTTPException
 from settings import settings
-
-def search_restaurants(lat: float, lng: float, range: int):
+from app.models.searchparams import SearchParams
+# リクエストパラメータはほぼ無限に増えていくかも
+def search_restaurants(params: SearchParams):
     api_url = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
-    params = {
-        # リクエストパラメータはほぼ無限に増えていくかも
+    query_params = {
         "key": settings.hotpepperAPI,
-        "lat": lat,
-        "lng": lng,
-        "range": range,
+        "lat": params.lat,
+        "lng": params.lng,
+        "range": params.range,
+        "keyword": params.keyword,
         "format": "json",
     }
 
     try:
-        response = requests.get(api_url, params=params)
+        response = requests.get(api_url, params=query_params)
         response.raise_for_status()
         return response.json().get("results", {}).get("shop", [])
     except requests.RequestException as e:
