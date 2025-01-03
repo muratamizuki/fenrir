@@ -1,5 +1,3 @@
-import requests
-
 """
 店舗検索用
 
@@ -10,22 +8,27 @@ import requests
 :return: 店舗情報のリスト
 """
 
+import requests
+from fastapi import HTTPException
 
-def search_restaurants(lat, lng, renge):
+import requests
+from fastapi import HTTPException
+from settings import settings
+
+def search_restaurants(lat: float, lng: float, range: int):
     api_url = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
     params = {
-        "key": "YOUR_RECRUIT_API_KEY",
+        # リクエストパラメータはほぼ無限に増えていくかも
+        "key": settings.hotpepperAPI,
         "lat": lat,
         "lng": lng,
-        # "keyword": keyword,
-        "range": renge,  # 検索範囲 (1=300m, 2=500m, 3=1km, 4=2km, 5=3km)
-        
+        "range": range,
         "format": "json",
     }
 
     try:
         response = requests.get(api_url, params=params)
-        response.raise_for_status()  # ステータスコードがエラーの場合例外を投げる
+        response.raise_for_status()
         return response.json().get("results", {}).get("shop", [])
     except requests.RequestException as e:
-        raise RuntimeError(f"Gourmet Search API failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Gourmet API failed: {str(e)}")

@@ -1,9 +1,12 @@
 # demoって名前はややこしいかも
-from flask_restx import Namespace, Resource
+from fastapi import APIRouter
+from app.services.geolocation import get_geolocation
 
-demo_ns = Namespace('demo')
+router = APIRouter()
 
-@demo_ns.route('/')
-class DemoResource(Resource):
-    def get(self):
-        return {"message": "Hello!"}
+@router.get("/")
+def demo():
+    """Demo エンドポイント"""
+    return {"message": "Hello!"}
+
+@router.get("/geolocation")
