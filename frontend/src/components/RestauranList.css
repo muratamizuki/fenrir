@@ -1,0 +1,34 @@
+.restaurant-item {
+    width: 300px; /* ボックスの幅を指定 */
+    height: 400px; /* ボックスの高さを指定 */
+    border: 1px solid #ccc; /* 枠線を追加 */
+    border-radius: 10px; /* 角を丸く */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* ボックスシャドウ */
+    padding: 20px;
+    margin: 10px;
+    display: flex;
+    flex-direction: column; /* 内容を縦に並べる */
+    justify-content: space-between; /* 上下のスペースを均等に */
+    align-items: center; /* 中央揃え */
+    background-color: #f9f9f9; /* 背景色 */
+  }
+  
+  .restaurant-logo {
+    width: 100px;
+    height: 100px;
+    object-fit: cover; /* 画像を枠に収める */
+    border-radius: 50%; /* ロゴを丸くする */
+  }
+  
+  .restaurant-details h3 {
+    margin: 10px 0;
+    font-size: 18px;
+    text-align: center;
+  }
+  
+  .restaurant-details p {
+    font-size: 14px;
+    text-align: center;
+    color: #666;
+  }
+  
