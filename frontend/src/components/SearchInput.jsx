@@ -9,7 +9,7 @@ const SearchInput = ({ placeholder = "検索ワードを入力してください
 
   const handleSearch = () => {
     if (onSearch) {
-      onSearch(inputValue); // 親コンポーネントに入力値を渡す
+      onSearch(inputValue); // 検索ワードわたす
     }
   };
 
