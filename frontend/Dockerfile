@@ -1,23 +1,29 @@
 # ベースイメージ
-FROM node:18-alpine AS build
+FROM node:18-alpine AS builder
 
 # 作業ディレクトリ設定
 WORKDIR /app
 
-# パッケージインストール
-COPY package*.json ./
+# パッケージコピー
+COPY package.json yarn.lock ./
 
-RUN npm install
-RUN npm install react-router-dom @babel/plugin-proposal-private-property-in-object
+# パッケージインストール
+RUN yarn install
+
+# ソースコードをコピー
 COPY . .
 
 # ビルド
-RUN npm run build
+RUN yarn build
 
+FROM node:18-alpine
 
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
+# ポート公開
 EXPOSE 3000
 
-# 起動
-CMD ["npm", "start"]
-
+# 起動コマンド
+CMD ["yarn", "start"]

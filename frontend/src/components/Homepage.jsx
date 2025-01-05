@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Ensure this is imported
-import CheckboxGroup from "../components/CheckboxGroup";
-import DistanceSelector from "../components/DistanceSelector";
-import SearchInput from "../components/SearchInput";
+import { useRouter } from "next/router";
+import CheckboxGroup from "./CheckboxGroup";
+import DistanceSelector from "./DistanceSelector";
+import SearchInput from "./SearchInput";
 
 // チェックボックスのオプション　こーどがすごいことになるからどうにかしたい
 const options = {
@@ -25,8 +25,8 @@ const initializeStates = (options) =>
     return acc;
   }, {});
 
-const ParentComponent = () => {
-  const navigate = useNavigate();
+const Homepage = () => {
+  const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDistance, setSelectedDistance] = useState("range:3");
   const [checkedMainStates, setCheckedMainStates] = useState(
@@ -43,7 +43,7 @@ const ParentComponent = () => {
     handleSubmit(); // 送信
   };
 
-  // 距離が変わった時に更新
+  // 距離が変わった時
   const handleDistanceChange = (selectedValue) => {
     setSelectedDistance(selectedValue);
     console.log("選択された距離 (value):", selectedValue);
@@ -54,11 +54,11 @@ const ParentComponent = () => {
     setState((prev) => ({ ...prev, [value]: !prev[value] }));
   };
 
-  // Geolocationで現在位置を取得
+  // Geolocation
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by this browser."));
+        reject(new Error("Geolocation is error"));
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -69,7 +69,7 @@ const ParentComponent = () => {
           });
         },
         (error) => {
-          reject(new Error(`Geolocation error: ${error.message}`));
+          reject(new Error(`error: ${error.message}`));
         }
       );
     });
@@ -78,7 +78,7 @@ const ParentComponent = () => {
   // チェックされたオプションを統合
   const mergeCheckedOptions = (states) =>
     Object.entries(states)
-      .filter(([_, checked]) => checked)
+      .filter(([_, checked]) => checked) 
       .reduce((acc, [key]) => {
         acc[key] = 1;
         return acc;
@@ -87,19 +87,24 @@ const ParentComponent = () => {
   // 送信
   const handleSubmit = async () => {
     try {
-      const position = await getCurrentPosition();
+      const position = await getCurrentPosition(); // 現在位置を取得
 
       const payload = {
-        lat: position.latitude,
-        lng: position.longitude,
-        range: selectedDistance,
-        keyword: searchKeyword,
-        ...mergeCheckedOptions(checkedMainStates),
-        ...mergeCheckedOptions(checkedSubStates),
+        lat: position.latitude, // 緯度
+        lng: position.longitude, // 経度
+        range: selectedDistance.replace("range:", ""), // 距離
+        keyword: searchKeyword, // 検索キーワード
+        ...mergeCheckedOptions(checkedMainStates), // メインオプション
+        ...mergeCheckedOptions(checkedSubStates), // サブオプション
       };
 
       console.log("送信データ:", payload);
-      navigate("/results", { state: { payload } });
+
+      // 検索結果ページへ遷移
+      router.push({
+        pathname: "/results",
+        query: payload,
+      });
     } catch (error) {
       console.error("エラー", error);
     }
@@ -120,7 +125,6 @@ const ParentComponent = () => {
         selectedValue={selectedDistance}
         onChange={handleDistanceChange}
       />
-
       <h2>メインオプション</h2>
       <CheckboxGroup
         options={options.main}
@@ -137,4 +141,4 @@ const ParentComponent = () => {
   );
 };
 
-export default ParentComponent;
+export default Homepage;
