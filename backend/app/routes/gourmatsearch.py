@@ -1,19 +1,13 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from app.services.gourmet import search_restaurants
-from app.models.searchparams import SearchParams
-
 # 大事
-class SearchParams(BaseModel):
-    lat: float
-    lng: float
-    range: int
-    keyword: str
+from fastapi import APIRouter, Depends
+from typing import List
+from app.models.searchparams import SearchParams
+from app.services.gourmet import search_restaurants
 
 router = APIRouter()
 
-
-@router.post("/hotpepper-restaurants")
-def search_restaurants_by_location(params: SearchParams):
-    results = search_restaurants(params)
-    return {"restaurants": results}
+@router.get("/hotpepper-restaurants")
+def get_restaurants(params: SearchParams = Depends()):
+    """クエリパラメータを SearchParams にマッピングし、検索サービスを呼び出す"""
+    result = search_restaurants(params)
+    return {"restaurants": result}

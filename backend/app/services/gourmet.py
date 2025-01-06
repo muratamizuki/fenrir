@@ -12,10 +12,12 @@
 import requests
 from fastapi import HTTPException
 from settings import settings
-from app.models.searchparams import SearchParams
-# リクエストパラメータはほぼ無限に増えていくかも
+from app.models.searchparams import SearchParams  # 後述のモデル定義例を参照
+
 def search_restaurants(params: SearchParams):
     api_url = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+
+    # クエリパラメータ
     query_params = {
         "key": settings.hotpepperAPI,
         "lat": params.lat,
@@ -25,9 +27,21 @@ def search_restaurants(params: SearchParams):
         "format": "json",
     }
 
+
+    if params.page and params.limit:
+        query_params["start"] = (params.page - 1) * params.limit + 1
+        query_params["count"] = params.limit
+    else:
+        query_params["count"] = 10
+
     try:
         response = requests.get(api_url, params=query_params)
         response.raise_for_status()
-        return response.json().get("results", {}).get("shop", [])
+
+        data = response.json()
+        return data.get("results", {}).get("shop", [])
     except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Gourmet API failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gourmet API failed: {str(e)}"
+        )
