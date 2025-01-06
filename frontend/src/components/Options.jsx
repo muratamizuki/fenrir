@@ -1,22 +1,17 @@
 // 親
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import Options from "./Options";
+import Options from "./Options"; 
 import SearchInput from "./SearchInput";
 
 const Homepage = () => {
   const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedDistance, setSelectedDistance] = useState("3");
+  const [selectedDistance, setSelectedDistance] = useState("3"); 
 
   // 選択されたオプションのステートを保持
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
   const [selectedSubOptions, setSelectedSubOptions] = useState({});
-
-  // 店一覧とページングのステート（必要に応じて）
-  const [restaurants, setRestaurants] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(true);
 
   // 検索ワードの変更
   const handleSearch = (keyword) => {
@@ -52,7 +47,7 @@ const Homepage = () => {
     });
   };
 
-  // チェックされたオプションを統合
+  // チェックされたオプション
   const mergeCheckedOptions = (states) =>
     Object.entries(states)
       .filter(([_, checked]) => checked)
@@ -77,7 +72,7 @@ const Homepage = () => {
 
       console.log("送信データ:", payload);
 
-      // 検索結果ページへ遷移
+      // 検索結果ページへ
       router.push({
         pathname: "/results",
         query: payload,
@@ -91,13 +86,12 @@ const Homepage = () => {
     <div>
       <h1>検索</h1>
       <SearchInput onSearch={handleSearch} />
-
-      {/* オプションコンポーネントを使用 */}
+      
       <Options
         selectedDistance={selectedDistance}
         onDistanceChange={handleDistanceChange}
         onMainOptionsChange={setSelectedMainOptions}
-        onSubOptionsChange={setSelectedSubOptions}
+        onSubOptionsChange={setSelectedSubOptions} 
       />
     </div>
   );

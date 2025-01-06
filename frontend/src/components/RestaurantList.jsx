@@ -1,30 +1,9 @@
+// pages/results.jsx
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import DistanceSelector from "./DistanceSelector";
-import SearchInput from "./SearchInput";
-import CheckboxGroup from "./CheckboxGroup";
-import RestaurantItem from "./RestaurantItem";
-
-// チェックボックスのオプション定義
-const options = {
-  main: [
-    { value: "option1", label: "Option 1" },
-    { value: "option2", label: "Option 2" },
-    { value: "option3", label: "Option 3" },
-  ],
-  sub: [
-    { value: "suboption1", label: "Sub Option 1" },
-    { value: "suboption2", label: "Sub Option 2" },
-    { value: "suboption3", label: "Sub Option 3" },
-  ],
-};
-
-// チェックボックス初期状態
-const initializeStates = (optionArray) =>
-  optionArray.reduce((acc, option) => {
-    acc[option.value] = false;
-    return acc;
-  }, {});
+import SearchInput from "../components/SearchInput";
+import Options from "../components/Options";
+import RestaurantList from "../components/RestaurantList";
 
 const PAGE_SIZE = 10;
 
@@ -32,28 +11,26 @@ const ResultsPage = () => {
   const router = useRouter();
 
   // ------------------------
-  // 1. 検索条件
+  // 1. 検索条件のステート
   // ------------------------
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
-  const [range, setRange] = useState("3");
+  const [range, setRange] = useState("3"); // 例: "3" に変更
   const [keyword, setKeyword] = useState("");
-  const [checkedMainStates, setCheckedMainStates] = useState(
-    initializeStates(options.main)
-  );
-  const [checkedSubStates, setCheckedSubStates] = useState(
-    initializeStates(options.sub)
-  );
+
+  // 選択されたオプションのステートを保持
+  const [selectedMainOptions, setSelectedMainOptions] = useState({});
+  const [selectedSubOptions, setSelectedSubOptions] = useState({});
 
   // ------------------------
-  // 2. 結果表示/ページング
+  // 2. 結果表示/ページングのステート
   // ------------------------
   const [restaurants, setRestaurants] = useState([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
 
   // ------------------------
-  // 初回マウント時: URLクエリから読み取り & APIコール
+  // 3. 初回マウント時: URLクエリからステートをセットし、APIを呼び出す
   // ------------------------
   useEffect(() => {
     if (!router.isReady) return; // クエリが読み込まれるまで待つ
@@ -63,7 +40,7 @@ const ResultsPage = () => {
       lng: qLng,
       range: qRange,
       keyword: qKeyword,
-      page: qPage, // あれば
+      page: qPage,
       ...rest
     } = router.query;
 
@@ -74,34 +51,39 @@ const ResultsPage = () => {
     if (qKeyword) setKeyword(qKeyword);
     if (qPage) setPage(Number(qPage));
 
-    // チェックボックス系
-    const mainCopy = { ...checkedMainStates };
-    const subCopy = { ...checkedSubStates };
+    // チェックボックスのステート更新
+    const mainOptions = ["option1", "option2", "option3"];
+    const subOptions = ["suboption1", "suboption2", "suboption3"];
 
-    Object.entries(rest).forEach(([key, value]) => {
-      if (value === "1") {
-        if (mainCopy[key] !== undefined) mainCopy[key] = true;
-        if (subCopy[key] !== undefined) subCopy[key] = true;
-      }
+    const initialMain = {};
+    const initialSub = {};
+
+    mainOptions.forEach((key) => {
+      initialMain[key] = rest[key] === "1";
     });
-    setCheckedMainStates(mainCopy);
-    setCheckedSubStates(subCopy);
 
-    // 初回リクエスト (ページに飛んできた時点でクエリを使ってAPIリクエスト)
+    subOptions.forEach((key) => {
+      initialSub[key] = rest[key] === "1";
+    });
+
+    setSelectedMainOptions(initialMain);
+    setSelectedSubOptions(initialSub);
+
+    // 初回リクエスト
     fetchRestaurants({
       lat: qLat || "",
       lng: qLng || "",
       range: qRange || "3",
       keyword: qKeyword || "",
       page: qPage ? Number(qPage) : 1,
-      main: mainCopy,
-      sub: subCopy,
+      main: initialMain,
+      sub: initialSub,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
   // ------------------------
-  // API呼び出し関数
+  // 4. API呼び出し関数
   // ------------------------
   const fetchRestaurants = async ({
     lat,
@@ -114,6 +96,7 @@ const ResultsPage = () => {
     isLoadMore = false,
   }) => {
     try {
+      // チェックされたオプションだけ { option1: 1, suboption3: 1 } のようにまとめる
       const mergeCheckedOptions = (states) =>
         Object.entries(states)
           .filter(([_, checked]) => checked)
@@ -140,17 +123,18 @@ const ResultsPage = () => {
         throw new Error("Failed to fetch restaurants");
       }
       const data = await response.json();
+      console.log("APIレスポンス:", data);
 
       if (isLoadMore) {
         setRestaurants((prev) => [...prev, ...data.restaurants]);
       } else {
-        setRestaurants(data.restaurants);
+        setRestaurants(data.restaurants || []);
       }
 
       if (typeof data.hasNextPage !== "undefined") {
         setHasNextPage(data.hasNextPage);
       } else {
-        setHasNextPage(data.restaurants.length === PAGE_SIZE);
+        setHasNextPage((data.restaurants || []).length === PAGE_SIZE);
       }
     } catch (error) {
       console.error("API呼び出し失敗:", error);
@@ -158,7 +142,7 @@ const ResultsPage = () => {
   };
 
   // ------------------------
-  // 検索ボタン(送信ボタン) を押した時
+  // 5. 検索ボタン（送信ボタン）を押した時
   // ------------------------
   const handleSearchSubmit = async () => {
     setPage(1);
@@ -168,14 +152,40 @@ const ResultsPage = () => {
       range,
       keyword,
       page: 1,
-      main: checkedMainStates,
-      sub: checkedSubStates,
+      main: selectedMainOptions,
+      sub: selectedSubOptions,
       isLoadMore: false,
+    });
+
+    // クエリを更新してブックマーク可能にする場合
+    const payload = {
+      lat,
+      lng,
+      range,
+      keyword,
+      page: 1,
+      ...Object.entries(selectedMainOptions)
+        .filter(([_, checked]) => checked)
+        .reduce((acc, [key]) => {
+          acc[key] = 1;
+          return acc;
+        }, {}),
+      ...Object.entries(selectedSubOptions)
+        .filter(([_, checked]) => checked)
+        .reduce((acc, [key]) => {
+          acc[key] = 1;
+          return acc;
+        }, {}),
+    };
+
+    router.push({
+      pathname: "/results",
+      query: payload,
     });
   };
 
   // ------------------------
-  // もっと読み込む
+  // 6. 「もっと読み込む」ボタン
   // ------------------------
   const handleLoadMore = async () => {
     const nextPage = page + 1;
@@ -187,9 +197,15 @@ const ResultsPage = () => {
       range,
       keyword,
       page: nextPage,
-      main: checkedMainStates,
-      sub: checkedSubStates,
+      main: selectedMainOptions,
+      sub: selectedSubOptions,
       isLoadMore: true,
+    });
+
+    // クエリに page を追加（オプション）
+    router.push({
+      pathname: "/results",
+      query: { ...router.query, page: nextPage },
     });
   };
 
@@ -202,40 +218,26 @@ const ResultsPage = () => {
   const handleDistanceChange = (val) => {
     setRange(val);
   };
-  const handleCheckboxChange = (setState) => (value) => {
-    setState((prev) => ({ ...prev, [value]: !prev[value] }));
-  };
 
   // ------------------------
   // レイアウト
   // ------------------------
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-      {/* 検索欄 → SearchInputにボタン内蔵 */}
+      {/* 検索欄 */}
       <h1>検索</h1>
       <SearchInput
         value={keyword}
         onChange={handleKeywordChange}
-        onSubmit={handleSearchSubmit} // ボタン押下時
+        onSubmit={handleSearchSubmit} // 送信ボタン押下時
       />
 
-      {/* メイン画面: 左に店一覧(縦一列)、右にオプション */}
-      <div style={{ display: "flex", marginTop: "2rem" }}>
-        {/* 左カラム: 一列で店一覧 */}
-        <div style={{ flex: 3, marginRight: "1rem" }}>
+      {/* メイン画面: 左に店一覧、右にオプション */}
+      <div style={{ display: "flex", marginTop: "2rem", gap: "1rem" }}>
+        {/* 左カラム: 店一覧 */}
+        <div style={{ flex: 3 }}>
           <h2>検索結果一覧</h2>
-          {/* 一列表示 → flexを外す/あるいはflexDirection: column */}
-          <div>
-            {restaurants.map((restaurant) => (
-              <RestaurantItem
-                key={restaurant.id}
-                name={restaurant.name}
-                logoImage={restaurant.logo_image}
-                address={restaurant.address}
-                catchPhrase={restaurant.catch}
-              />
-            ))}
-          </div>
+          <RestaurantList restaurants={restaurants} />
 
           {/* もっと読み込む */}
           {hasNextPage && (
@@ -247,30 +249,11 @@ const ResultsPage = () => {
 
         {/* 右カラム: オプション類 */}
         <div style={{ flex: 1 }}>
-          <h2>距離</h2>
-          <DistanceSelector
-            options={[
-              { value: "1", label: "300m" },
-              { value: "2", label: "500m" },
-              { value: "3", label: "1000m" },
-              { value: "4", label: "2000m" },
-              { value: "5", label: "3000m" },
-            ]}
-            selectedValue={range}
-            onChange={handleDistanceChange}
-          />
-          <h3>メインオプション</h3>
-          <CheckboxGroup
-            options={options.main}
-            checkedStates={checkedMainStates}
-            onChange={handleCheckboxChange(setCheckedMainStates)}
-          />
-
-          <h3>サブオプション</h3>
-          <CheckboxGroup
-            options={options.sub}
-            checkedStates={checkedSubStates}
-            onChange={handleCheckboxChange(setCheckedSubStates)}
+          <Options
+            selectedDistance={range}
+            onDistanceChange={handleDistanceChange}
+            onMainOptionsChange={setSelectedMainOptions} // メインオプション変更時
+            onSubOptionsChange={setSelectedSubOptions}   // サブオプション変更時
           />
         </div>
       </div>
