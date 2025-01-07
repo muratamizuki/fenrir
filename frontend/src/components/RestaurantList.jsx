@@ -1,4 +1,3 @@
-// pages/results.jsx
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import SearchInput from "../components/SearchInput";
@@ -10,28 +9,20 @@ const PAGE_SIZE = 10;
 const ResultsPage = () => {
   const router = useRouter();
 
-  // ------------------------
-  // 1. 検索条件のステート
-  // ------------------------
+
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
-  const [range, setRange] = useState("3"); // 例: "3" に変更
+  const [range, setRange] = useState("3");
   const [keyword, setKeyword] = useState("");
 
-  // 選択されたオプションのステートを保持
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
   const [selectedSubOptions, setSelectedSubOptions] = useState({});
 
-  // ------------------------
-  // 2. 結果表示/ページングのステート
-  // ------------------------
+
   const [restaurants, setRestaurants] = useState([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
 
-  // ------------------------
-  // 3. 初回マウント時: URLクエリからステートをセットし、APIを呼び出す
-  // ------------------------
   useEffect(() => {
     if (!router.isReady) return; // クエリが読み込まれるまで待つ
 
@@ -44,14 +35,14 @@ const ResultsPage = () => {
       ...rest
     } = router.query;
 
-    // ステートに反映
+    // ステート
     if (qLat) setLat(qLat);
     if (qLng) setLng(qLng);
     if (qRange) setRange(qRange);
     if (qKeyword) setKeyword(qKeyword);
     if (qPage) setPage(Number(qPage));
 
-    // チェックボックスのステート更新
+    // ステート更新
     const mainOptions = ["option1", "option2", "option3"];
     const subOptions = ["suboption1", "suboption2", "suboption3"];
 
@@ -69,7 +60,7 @@ const ResultsPage = () => {
     setSelectedMainOptions(initialMain);
     setSelectedSubOptions(initialSub);
 
-    // 初回リクエスト
+    // 入った時のリクエスト
     fetchRestaurants({
       lat: qLat || "",
       lng: qLng || "",
@@ -79,12 +70,9 @@ const ResultsPage = () => {
       main: initialMain,
       sub: initialSub,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
-  // ------------------------
-  // 4. API呼び出し関数
-  // ------------------------
+
   const fetchRestaurants = async ({
     lat,
     lng,
@@ -96,7 +84,6 @@ const ResultsPage = () => {
     isLoadMore = false,
   }) => {
     try {
-      // チェックされたオプションだけ { option1: 1, suboption3: 1 } のようにまとめる
       const mergeCheckedOptions = (states) =>
         Object.entries(states)
           .filter(([_, checked]) => checked)
@@ -141,9 +128,6 @@ const ResultsPage = () => {
     }
   };
 
-  // ------------------------
-  // 5. 検索ボタン（送信ボタン）を押した時
-  // ------------------------
   const handleSearchSubmit = async () => {
     setPage(1);
     await fetchRestaurants({
@@ -184,9 +168,6 @@ const ResultsPage = () => {
     });
   };
 
-  // ------------------------
-  // 6. 「もっと読み込む」ボタン
-  // ------------------------
   const handleLoadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -202,16 +183,14 @@ const ResultsPage = () => {
       isLoadMore: true,
     });
 
-    // クエリに page を追加（オプション）
+
     router.push({
       pathname: "/results",
       query: { ...router.query, page: nextPage },
     });
   };
 
-  // ------------------------
-  // UIハンドラ
-  // ------------------------
+
   const handleKeywordChange = (val) => {
     setKeyword(val);
   };
