@@ -14,7 +14,7 @@ RUN yarn install
 COPY . .
 
 # ビルド
-RUN yarn build
+RUN NODE_OPTIONS=--max_old_space_size=8192 yarn build
 
 FROM node:18-alpine
 
