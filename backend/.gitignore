@@ -1,4 +1,4 @@
-backend/.env
+.env
 !backend/.env.sample
 __pycache__/
 *.pyc
