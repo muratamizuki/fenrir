@@ -13,12 +13,9 @@ def get_restaurants(params: SearchParams = Depends()):
     result = search_restaurants(params)
     return {"restaurants": result}
 
+
+
 @router.get("/hotpepper-restaurants/detail")
-def get_restaurant_detail(id: str = Query(..., description="レストランのIDを指定")):
-    try:
-        result = search_restaurant_detail(id)
-        if not result:
-            raise HTTPException(status_code=404, detail="Restaurant not found")
-        return {"restaurant": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def get_restaurant_detail(id):
+    result = search_restaurant_detail(id)
+    return {"restaurants": result}

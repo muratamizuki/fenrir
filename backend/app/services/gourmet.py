@@ -12,32 +12,38 @@
 import requests
 from fastapi import HTTPException, Query
 from settings import settings
+from typing import Dict
 from app.models.searchparams import SearchParams  # 後述のモデル定義例を参照
 
 def search_restaurants(params: SearchParams):
     api_url = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
 
-    # クエリパラメータ
-    query_params = {
+    # 基本のクエリパラメータ
+    query_params: Dict[str, str] = {
         "key": settings.hotpepperAPI,
-        "lat": params.lat,
-        "lng": params.lng,
-        "range": params.range,
+        "lat": str(params.lat),
+        "lng": str(params.lng),
+        "range": str(params.range),
         "keyword": params.keyword,
         "format": "json",
     }
 
-
+    # ページリミット処理
     if params.page and params.limit:
-        query_params["start"] = (params.page - 1) * params.limit + 1
-        query_params["count"] = params.limit
+        query_params["start"] = str((params.page - 1) * params.limit + 1)
+        query_params["count"] = str(params.limit)
     else:
-        query_params["count"] = 10
+        query_params["count"] = "10"
+
+    # クエリ追加
+    for field_name, field_value in params.dict().items():
+        if field_value is not None and field_name not in ["lat", "lng", "range", "keyword", "page", "limit"]:
+            query_params[field_name] = str(field_value)
 
     try:
+        # APIリクエスト
         response = requests.get(api_url, params=query_params)
         response.raise_for_status()
-
         data = response.json()
         return data.get("results", {}).get("shop", [])
     except requests.RequestException as e:
@@ -46,22 +52,23 @@ def search_restaurants(params: SearchParams):
             detail=f"Gourmet API failed: {str(e)}"
         )
 
-def search_restaurant_detail(id: str = Query(..., description="レストランのIDを指定")):
-    API_URL = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+
+
+def search_restaurant_detail(id):
+    api_url = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
     query_params = {
         "key": settings.hotpepperAPI,
         "id": id,
+        "format": "json",
     }
 
     try:
-        response = requests.get(API_URL, params=query_params)
+        response = requests.get(api_url, params=query_params)
         response.raise_for_status()
         data = response.json()
-        
-        # 見つからなかったら
-        if "results" in data and "shop" in data["results"]:
-            return data["results"]["shop"][0]
-        else:
-            raise HTTPException(status_code=404, detail="Restaurant not found")
+        return data.get("results", {}).get("shop", [])
     except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Gourmet API failed: {str(e)}")
+        print(f"URL: {response.url}")
+        print(f"Response Content: {response.text}")
+        print(f"Error: {e}")
+        return None

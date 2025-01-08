@@ -26,8 +26,8 @@ class SearchParams(BaseModel):
     shochu: Optional[int] = None
     english: Optional[int] = None
     ktai: Optional[int] = None
-    free_food: Optional[int] = None
-    free_drink: Optional[int] = None
+    free_food: Optional[str] = None
+    free_drink: Optional[str] = None
     lunch: Optional[int] = None
     course: Optional[int] = None
     non_smoking: Optional[int] = None

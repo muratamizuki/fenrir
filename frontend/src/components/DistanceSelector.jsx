@@ -1,5 +1,5 @@
 import React from "react";
-
+// optionsで使ってる　忘れる
 const DistanceSelector = ({ options, selectedValue, onChange }) => {
   return (
     <div>
