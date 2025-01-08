@@ -1,30 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import SearchInput from "../components/SearchInput";
-import Options from "../components/Options";
-import RestaurantList from "../components/RestaurantList";
+import Link from "next/link";
+import SearchInput from "./SearchInput";
+import Options from "./Options";
+import RestaurantItem from "./RestaurantItem";
 
 const PAGE_SIZE = 10;
 
-const ResultsPage = () => {
+const RestaurantList = () => {
   const router = useRouter();
 
-
+  // 1. 検索条件
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [range, setRange] = useState("3");
   const [keyword, setKeyword] = useState("");
 
-  const [selectedMainOptions, setSelectedMainOptions] = useState({});
-  const [selectedSubOptions, setSelectedSubOptions] = useState({});
+  // オプション
+  const [mainOptions, setMainOptions] = useState([]);
+  const [subOptions, setSubOptions] = useState([]);
 
+  const [checkedMainStates, setCheckedMainStates] = useState({});
+  const [checkedSubStates, setCheckedSubStates] = useState({});
 
+  // 結果表示
   const [restaurants, setRestaurants] = useState([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
 
+  // 入った時のAPI呼び出し
   useEffect(() => {
-    if (!router.isReady) return; // クエリが読み込まれるまで待つ
+    if (!router.isReady) return;
 
     const {
       lat: qLat,
@@ -35,44 +41,36 @@ const ResultsPage = () => {
       ...rest
     } = router.query;
 
-    // ステート
     if (qLat) setLat(qLat);
     if (qLng) setLng(qLng);
     if (qRange) setRange(qRange);
     if (qKeyword) setKeyword(qKeyword);
     if (qPage) setPage(Number(qPage));
 
-    // ステート更新
-    const mainOptions = ["option1", "option2", "option3"];
-    const subOptions = ["suboption1", "suboption2", "suboption3"];
+    const mainCopy = { ...checkedMainStates };
+    const subCopy = { ...checkedSubStates };
 
-    const initialMain = {};
-    const initialSub = {};
-
-    mainOptions.forEach((key) => {
-      initialMain[key] = rest[key] === "1";
+    Object.entries(rest).forEach(([key, value]) => {
+      if (value === "1") {
+        if (mainCopy[key] !== undefined) mainCopy[key] = true;
+        if (subCopy[key] !== undefined) subCopy[key] = true;
+      }
     });
+    setCheckedMainStates(mainCopy);
+    setCheckedSubStates(subCopy);
 
-    subOptions.forEach((key) => {
-      initialSub[key] = rest[key] === "1";
-    });
-
-    setSelectedMainOptions(initialMain);
-    setSelectedSubOptions(initialSub);
-
-    // 入った時のリクエスト
     fetchRestaurants({
       lat: qLat || "",
       lng: qLng || "",
       range: qRange || "3",
       keyword: qKeyword || "",
       page: qPage ? Number(qPage) : 1,
-      main: initialMain,
-      sub: initialSub,
+      main: mainCopy,
+      sub: subCopy,
     });
   }, [router.isReady]);
 
-
+  // API呼び出
   const fetchRestaurants = async ({
     lat,
     lng,
@@ -110,24 +108,20 @@ const ResultsPage = () => {
         throw new Error("Failed to fetch restaurants");
       }
       const data = await response.json();
-      console.log("APIレスポンス:", data);
 
       if (isLoadMore) {
         setRestaurants((prev) => [...prev, ...data.restaurants]);
       } else {
-        setRestaurants(data.restaurants || []);
+        setRestaurants(data.restaurants);
       }
 
-      if (typeof data.hasNextPage !== "undefined") {
-        setHasNextPage(data.hasNextPage);
-      } else {
-        setHasNextPage((data.restaurants || []).length === PAGE_SIZE);
-      }
+      setHasNextPage(data.restaurants.length === PAGE_SIZE);
     } catch (error) {
       console.error("API呼び出し失敗:", error);
     }
   };
 
+  // 検索botann
   const handleSearchSubmit = async () => {
     setPage(1);
     await fetchRestaurants({
@@ -136,38 +130,13 @@ const ResultsPage = () => {
       range,
       keyword,
       page: 1,
-      main: selectedMainOptions,
-      sub: selectedSubOptions,
+      main: checkedMainStates,
+      sub: checkedSubStates,
       isLoadMore: false,
-    });
-
-    // クエリを更新してブックマーク可能にする場合
-    const payload = {
-      lat,
-      lng,
-      range,
-      keyword,
-      page: 1,
-      ...Object.entries(selectedMainOptions)
-        .filter(([_, checked]) => checked)
-        .reduce((acc, [key]) => {
-          acc[key] = 1;
-          return acc;
-        }, {}),
-      ...Object.entries(selectedSubOptions)
-        .filter(([_, checked]) => checked)
-        .reduce((acc, [key]) => {
-          acc[key] = 1;
-          return acc;
-        }, {}),
-    };
-
-    router.push({
-      pathname: "/results",
-      query: payload,
     });
   };
 
+  // ページング
   const handleLoadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -178,44 +147,42 @@ const ResultsPage = () => {
       range,
       keyword,
       page: nextPage,
-      main: selectedMainOptions,
-      sub: selectedSubOptions,
+      main: checkedMainStates,
+      sub: checkedSubStates,
       isLoadMore: true,
     });
-
-
-    router.push({
-      pathname: "/results",
-      query: { ...router.query, page: nextPage },
-    });
-  };
-
-
-  const handleKeywordChange = (val) => {
-    setKeyword(val);
-  };
-  const handleDistanceChange = (val) => {
-    setRange(val);
   };
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-      {/* 検索欄 */}
       <h1>検索</h1>
       <SearchInput
         value={keyword}
-        onChange={handleKeywordChange}
-        onSubmit={handleSearchSubmit} // 送信ボタン押下時
+        onChange={setKeyword}
+        onSubmit={handleSearchSubmit}
       />
 
-      {/* メイン画面: 左に店一覧、右にオプション */}
-      <div style={{ display: "flex", marginTop: "2rem", gap: "1rem" }}>
-        {/* 左カラム: 店一覧 */}
-        <div style={{ flex: 3 }}>
+      <div style={{ display: "flex", marginTop: "2rem" }}>
+        <div style={{ flex: 3, marginRight: "1rem" }}>
           <h2>検索結果一覧</h2>
-          <RestaurantList restaurants={restaurants} />
-
-          {/* もっと読み込む */}
+          {restaurants.map((restaurant) => (
+            <Link
+              key={restaurant.id}
+              href={{
+                pathname: "/details",
+                query: { id: restaurant.id },
+              }}
+            >
+              <a style={{ textDecoration: "none", color: "inherit" }}>
+                <div>
+                  <h3>{restaurant.name}</h3>
+                  <img src={restaurant.logo_image} alt={`${restaurant.name} ロゴ`} />
+                  <p>{restaurant.address}</p>
+                  <p>{restaurant.catchPhrase}</p>
+                </div>
+              </a>
+            </Link>
+          ))}
           {hasNextPage && (
             <button onClick={handleLoadMore} style={{ marginTop: "1rem" }}>
               もっと読み込む
@@ -223,13 +190,14 @@ const ResultsPage = () => {
           )}
         </div>
 
-        {/* 右カラム: オプション類 */}
         <div style={{ flex: 1 }}>
           <Options
             selectedDistance={range}
-            onDistanceChange={handleDistanceChange}
-            onMainOptionsChange={setSelectedMainOptions} // メインオプション変更時
-            onSubOptionsChange={setSelectedSubOptions}   // サブオプション変更時
+            onDistanceChange={setRange}
+            onMainOptionsChange={setCheckedMainStates}
+            onSubOptionsChange={setCheckedSubStates}
+            initialMainOptions={checkedMainStates}
+            initialSubOptions={checkedSubStates}
           />
         </div>
       </div>
@@ -237,4 +205,4 @@ const ResultsPage = () => {
   );
 };
 
-export default ResultsPage;
+export default RestaurantList;

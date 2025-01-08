@@ -10,7 +10,7 @@
 
 
 import requests
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
 from settings import settings
 from app.models.searchparams import SearchParams  # 後述のモデル定義例を参照
 
@@ -45,3 +45,23 @@ def search_restaurants(params: SearchParams):
             status_code=500,
             detail=f"Gourmet API failed: {str(e)}"
         )
+
+def search_restaurant_detail(id: str = Query(..., description="レストランのIDを指定")):
+    API_URL = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
+    query_params = {
+        "key": settings.hotpepperAPI,
+        "id": id,
+    }
+
+    try:
+        response = requests.get(API_URL, params=query_params)
+        response.raise_for_status()
+        data = response.json()
+        
+        # 見つからなかったら
+        if "results" in data and "shop" in data["results"]:
+            return data["results"]["shop"][0]
+        else:
+            raise HTTPException(status_code=404, detail="Restaurant not found")
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Gourmet API failed: {str(e)}")

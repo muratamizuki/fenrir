@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Options from "./Options";
 import SearchInput from "./SearchInput";
+import { mainOptions, subOptions } from "./Options";
+
 
 const Homepage = () => {
   const router = useRouter();
@@ -13,16 +15,11 @@ const Homepage = () => {
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
   const [selectedSubOptions, setSelectedSubOptions] = useState({});
 
-  // 店一覧とページングのステート（必要に応じて）
-  const [restaurants, setRestaurants] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(true);
-
   // 検索ワードの変更
   const handleSearch = (keyword) => {
     console.log("検索ワード:", keyword);
     setSearchKeyword(keyword);
-    handleSubmit(); // 送信
+    handleSubmit(keyword); // 送信
   };
 
   // 距離が変わった時
@@ -53,26 +50,27 @@ const Homepage = () => {
   };
 
   // チェックされたオプションを統合
-  const mergeCheckedOptions = (states) =>
-    Object.entries(states)
-      .filter(([_, checked]) => checked)
-      .reduce((acc, [key]) => {
-        acc[key] = 1;
-        return acc;
-      }, {});
+  const mergeCheckedOptions = (options, states) => {
+    return options.reduce((acc, option) => {
+      if (states[option.value]) {
+        acc[option.value] = 1;
+      }
+      return acc;
+    }, {});
+  };
 
   // 送信
-  const handleSubmit = async () => {
+  const handleSubmit = async (keyword) => {
     try {
       const position = await getCurrentPosition(); // 現在位置を取得
 
       const payload = {
         lat: position.latitude, // 緯度
         lng: position.longitude, // 経度
-        range: selectedDistance, // 距離 (既に "3" 形式)
-        keyword: searchKeyword, // 検索キーワード
-        ...mergeCheckedOptions(selectedMainOptions), // メインオプション
-        ...mergeCheckedOptions(selectedSubOptions), // サブオプション
+        range: selectedDistance, // 距離
+        keyword: keyword, // 検索キーワード
+        ...mergeCheckedOptions(mainOptions, selectedMainOptions), // メインオプション
+        ...mergeCheckedOptions(subOptions, selectedSubOptions), // サブオプション
       };
 
       console.log("送信データ:", payload);
@@ -92,7 +90,6 @@ const Homepage = () => {
       <h1>検索</h1>
       <SearchInput onSearch={handleSearch} />
 
-      {/* オプションコンポーネントを使用 */}
       <Options
         selectedDistance={selectedDistance}
         onDistanceChange={handleDistanceChange}
