@@ -261,7 +261,7 @@ const RestaurantList = () => {
       <h1>レストラン一覧</h1>
 
       <SearchInput onSearch={handleSearch} />
-
+      {/* コンポーネント化しなきゃいけないよ〜、期限〜が〜近いよ〜期限が近いよ〜近いよ期限、期限が近いよ〜 */}
       <div style={{ display: "flex", marginTop: "2rem" }}>
         <div style={{ flex: 3, marginRight: "1rem" }}>
           <h2>検索結果</h2>
