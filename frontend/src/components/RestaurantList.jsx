@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-
 import SearchInput from "./SearchInput";
 import Options from "./Options";
 import { mainOptions, subOptions } from "./Options";
 
 const PAGE_SIZE = 10;
 
-// geolocation取得 (homepage と同じ)
+// geolocation
 const getCurrentPosition = () => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -29,7 +28,7 @@ const getCurrentPosition = () => {
   });
 };
 
-// チェック状態を {key: "1"} にまとめる (homepage と同じ)
+// チェック
 const mergeCheckedOptions = (optionsArray, states) => {
   return optionsArray.reduce((acc, option) => {
     if (states[option.value]) {
@@ -42,9 +41,8 @@ const mergeCheckedOptions = (optionsArray, states) => {
 const RestaurantList = () => {
   const router = useRouter();
 
-  // ========== homepage.jsx と同じ命名に合わせる ==========
-  const [keyword, setKeyword] = useState("");  // 検索キーワード: homepage と合わせる
-  const [range, setRange] = useState("3");     // 距離: homepage と合わせる
+  const [keyword, setKeyword] = useState("");
+  const [range, setRange] = useState("3");
 
   // メイン/サブオプション
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
@@ -58,7 +56,32 @@ const RestaurantList = () => {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
 
-  // ① useEffect: クエリから復元
+  // ページング
+  const [items, setItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+
+  useEffect(() => {
+    fetchItems(currentPage);
+  }, [currentPage]);
+
+  // 
+  const fetchItems = async (page) => {
+    const res = await fetch(`/api/items?page=${page}`);
+    const data = await res.json();
+    setItems(data.items);
+    setTotalPages(data.totalPages);
+  };
+
+  // ページ番号
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+
+  // チェックボックスの引き継ぎ
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -108,7 +131,7 @@ const RestaurantList = () => {
     });
   }, [router.isReady]);
 
-  // ② API呼び出し
+  // apiよび
   const fetchRestaurants = async ({
     lat,
     lng,
@@ -153,15 +176,14 @@ const RestaurantList = () => {
     }
   };
 
-  // ========== homepage と同じロジックで送信 ==========
-  const handleSubmit = async (kw) => {
+  const handleSubmit = async (keyword) => {
     try {
       const position = await getCurrentPosition();
       const payload = {
         lat: position.latitude,
         lng: position.longitude,
         range,
-        keyword: kw,
+        keyword: keyword,
         page: "1",
         ...mergeCheckedOptions(mainOptions, selectedMainOptions),
         ...mergeCheckedOptions(subOptions, selectedSubOptions),
@@ -172,7 +194,7 @@ const RestaurantList = () => {
         lat: position.latitude,
         lng: position.longitude,
         range,
-        keyword: kw,
+        keyword: keyword,
         page: 1,
         main: selectedMainOptions,
         sub: selectedSubOptions,
@@ -181,7 +203,7 @@ const RestaurantList = () => {
 
       // URL 更新
       router.push({
-        pathname: "/results", // or "/restaurant-list" でも可
+        pathname: "/results",
         query: payload,
       });
       console.log("送信データ:", payload);
@@ -191,11 +213,11 @@ const RestaurantList = () => {
     }
   };
 
-  // SearchInput用: handleSearch
-  const handleSearch = (kw) => {
-    console.log("検索ワード:", kw);
-    setKeyword(kw);
-    handleSubmit(kw);
+  // 送信
+  const handleSearch = (keyword) => {
+    console.log("検索ワード:", keyword);
+    setKeyword(keyword);
+    handleSubmit(keyword);
   };
 
   // 「もっと読み込む」
@@ -238,7 +260,6 @@ const RestaurantList = () => {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
       <h1>レストラン一覧</h1>
 
-      {/* homepage と同様に SearchInput */}
       <SearchInput onSearch={handleSearch} />
 
       <div style={{ display: "flex", marginTop: "2rem" }}>
@@ -277,6 +298,42 @@ const RestaurantList = () => {
               もっと読み込む
             </button>
           )}
+          <h2>Pagination Example</h2>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+
+      {/* 前へ */}
+      <button
+        disabled={currentPage <= 1}
+        onClick={() => setCurrentPage(currentPage - 1)}
+      >
+        前のページ
+      </button>
+
+      {/* 番号 */}
+      {pageNumbers.map((num) => (
+        <button
+          key={num}
+          style={{
+            fontWeight: currentPage === num ? "bold" : "normal",
+            margin: "0 2px",
+          }}
+          onClick={() => setCurrentPage(num)}
+        >
+          {num}
+        </button>
+      ))}
+
+      {/* 次のページ */}
+      <button
+        disabled={currentPage >= totalPages}
+        onClick={() => setCurrentPage(currentPage + 1)}
+      >
+        次のページ
+      </button>
         </div>
 
         <div style={{ flex: 1 }}>

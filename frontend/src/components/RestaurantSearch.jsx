@@ -1,5 +1,4 @@
 // 親
-// ランダム検索
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Options from "./Options";
@@ -7,7 +6,7 @@ import SearchInput from "./SearchInput";
 import { mainOptions, subOptions } from "./Options";
 
 
-const Homepage = () => {
+const RestaurantSearch = () => {
   const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDistance, setSelectedDistance] = useState("3");
@@ -78,7 +77,7 @@ const Homepage = () => {
 
       // 検索結果ページへ遷移
       router.push({
-        pathname: "/randomresults",
+        pathname: "/results",
         query: payload,
       });
     } catch (error) {
@@ -88,7 +87,7 @@ const Homepage = () => {
 
   return (
     <div>
-      <h1>ランダム検索</h1>
+      <h1>検索</h1>
       <SearchInput onSearch={handleSearch} />
 
       <Options
@@ -101,4 +100,4 @@ const Homepage = () => {
   );
 };
 
-export default Homepage;
+export default RestaurantSearch;
