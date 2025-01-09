@@ -2,49 +2,63 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+
 import SearchInput from "./SearchInput";
 import Options from "./Options";
 import { mainOptions, subOptions } from "./Options";
-// import RestaurantItem from "./RestaurantItem";
 
 const PAGE_SIZE = 10;
+
+// geolocation取得 (homepage と同じ)
+const getCurrentPosition = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is error"));
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        reject(new Error(`error: ${error.message}`));
+      }
+    );
+  });
+};
+
+// チェック状態を {key: "1"} にまとめる (homepage と同じ)
+const mergeCheckedOptions = (optionsArray, states) => {
+  return optionsArray.reduce((acc, option) => {
+    if (states[option.value]) {
+      acc[option.value] = "1";
+    }
+    return acc;
+  }, {});
+};
 
 const RestaurantList = () => {
   const router = useRouter();
 
-  // 1. 検索条件
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
-  const [range, setRange] = useState("3");
-  const [keyword, setKeyword] = useState("");
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedDistance, setSelectedDistance] = useState("3");
-  const [selectedMainOptions, set] = useState({});
-  const [selectedSubOptions, setSelectedSubOptions] = useState({});
-  // オプション
-  const [mainOptions, setMainOptions] = useState([]);
-  const [subOptions, setSubOptions] = useState([]);
+  // ========== homepage.jsx と同じ命名に合わせる ==========
+  const [keyword, setKeyword] = useState("");  // 検索キーワード: homepage と合わせる
+  const [range, setRange] = useState("3");     // 距離: homepage と合わせる
 
-  // 結果表示
+  // メイン/サブオプション
+  const [selectedMainOptions, setSelectedMainOptions] = useState({});
+  const [selectedSubOptions, setSelectedSubOptions] = useState({});
+
   const [restaurants, setRestaurants] = useState([]);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
 
-  const [checkedMainStates, setCheckedMainStates] = useState(
-    mainOptions.reduce((acc, option) => {
-      acc[option.value] = false;
-      return acc;
-    }, {})
-  );
+  // lat, lng
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
 
-  const [checkedSubStates, setCheckedSubStates] = useState(
-    subOptions.reduce((acc, option) => {
-      acc[option.value] = false;
-      return acc;
-    }, {})
-  );
-  
-  // 入った時のAPI呼び出し
+  // ① useEffect: クエリから復元
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -61,117 +75,130 @@ const RestaurantList = () => {
     if (qLng) setLng(qLng);
     if (qRange) setRange(qRange);
     if (qKeyword) setKeyword(qKeyword);
-    if (qPage) setPage(Number(qPage));
+    if (qPage) setPage(Number(qPage) || 1);
 
-    const mainCopy = { ...checkedMainStates };
-    const subCopy = { ...checkedSubStates };
-
-    Object.entries(rest).forEach(([key, value]) => {
-      if (value === "1") {
-        if (mainCopy[key] !== undefined) mainCopy[key] = true;
-        if (subCopy[key] !== undefined) subCopy[key] = true;
+    // メインオプション復元
+    const mainTemp = {};
+    mainOptions.forEach((opt) => {
+      if (rest[opt.value] === "1") {
+        mainTemp[opt.value] = true;
       }
     });
-    setCheckedMainStates(mainCopy);
-    setCheckedSubStates(subCopy);
+    setSelectedMainOptions(mainTemp);
 
+    // サブオプション復元
+    const subTemp = {};
+    subOptions.forEach((opt) => {
+      if (rest[opt.value] === "1") {
+        subTemp[opt.value] = true;
+      }
+    });
+    setSelectedSubOptions(subTemp);
+
+    // fetch
     fetchRestaurants({
       lat: qLat || "",
       lng: qLng || "",
       range: qRange || "3",
       keyword: qKeyword || "",
       page: qPage ? Number(qPage) : 1,
-      main: mainCopy,
-      sub: subCopy,
+      main: mainTemp,
+      sub: subTemp,
+      isLoadMore: false,
     });
   }, [router.isReady]);
-  const mergeCheckedOptions = (options) => {
-    return Object.entries(options || {}).reduce((acc, [key, value]) => {
-      if (value) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
-  };
-  
 
-  // API呼び出
-  const fetchRestaurants = async () => {
-  
-    // クエリ
-    const query = router.query;
-  
-    const queryString = new URLSearchParams(query).toString();
-    const url = `http://localhost:8000/search/hotpepper-restaurants?${queryString}`;
-    console.log("Generated URL:", url);
-  
+  // ② API呼び出し
+  const fetchRestaurants = async ({
+    lat,
+    lng,
+    range,
+    keyword,
+    page,
+    main,
+    sub,
+    isLoadMore = false,
+  }) => {
     try {
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) {
+      const payload = {
+        lat,
+        lng,
+        range,
+        keyword,
+        page: String(page),
+        limit: String(PAGE_SIZE),
+        ...mergeCheckedOptions(mainOptions, main),
+        ...mergeCheckedOptions(subOptions, sub),
+      };
+
+      const qs = new URLSearchParams(payload).toString();
+      const url = `http://localhost:8000/search/hotpepper-restaurants?${qs}`;
+
+      console.log("Fetch URL:", url);
+      const res = await fetch(url);
+      if (!res.ok) {
         throw new Error("Failed to fetch restaurants");
       }
-      const data = await response.json();
-      setRestaurants(data.restaurants || []);
-      console.log("API Response:", data);
+      const data = await res.json();
+      console.log("APIレスポンス:", data);
+
+      if (isLoadMore) {
+        setRestaurants((prev) => [...prev, ...data.restaurants]);
+      } else {
+        setRestaurants(data.restaurants || []);
+      }
+      setHasNextPage((data.restaurants || []).length === PAGE_SIZE);
     } catch (error) {
       console.error("API呼び出し失敗:", error);
     }
   };
 
-  // geolocation
-  const getCurrentPosition = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is error"));
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          reject(new Error(`error: ${error.message}`));
-        }
-      );
-    });
-  };
-
-  // 検索ワードの変更
-  const handleSearch = (keyword) => {
-    console.log("検索ワード:", keyword);
-    setSearchKeyword(keyword);
-    handleSubmit(keyword); // 送信
-  };
-  const handleSubmit = async (keyword) => {
+  // ========== homepage と同じロジックで送信 ==========
+  const handleSubmit = async (kw) => {
     try {
-      const position = await getCurrentPosition(); // 現在位置を取得
-
+      const position = await getCurrentPosition();
       const payload = {
-        lat: position.latitude, // 緯度
-        lng: position.longitude, // 経度
-        range: selectedDistance, // 距離
-        keyword: keyword, // 検索キーワード
-        ...mergeCheckedOptions(mainOptions, ), // メインオプション
-        ...mergeCheckedOptions(subOptions, selectedSubOptions), // サブオプション
+        lat: position.latitude,
+        lng: position.longitude,
+        range,
+        keyword: kw,
+        page: "1",
+        ...mergeCheckedOptions(mainOptions, selectedMainOptions),
+        ...mergeCheckedOptions(subOptions, selectedSubOptions),
       };
 
-      console.log("送信データ:", payload);
+      // API再fetch
+      await fetchRestaurants({
+        lat: position.latitude,
+        lng: position.longitude,
+        range,
+        keyword: kw,
+        page: 1,
+        main: selectedMainOptions,
+        sub: selectedSubOptions,
+        isLoadMore: false,
+      });
 
-      // 検索結果ページへ遷移
+      // URL 更新
       router.push({
-        pathname: "/results",
+        pathname: "/results", // or "/restaurant-list" でも可
         query: payload,
       });
       console.log("送信データ:", payload);
-    } catch (error) {
-      console.error("エラー", error);
+    } catch (err) {
+      console.error("位置情報取得 or API呼び出し失敗:", err);
+      alert("位置情報が取得できませんでした");
     }
   };
 
-  // ページング
+  // SearchInput用: handleSearch
+  const handleSearch = (kw) => {
+    console.log("検索ワード:", kw);
+    setKeyword(kw);
+    handleSubmit(kw);
+  };
+
+  // 「もっと読み込む」
   const handleLoadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -182,39 +209,69 @@ const RestaurantList = () => {
       range,
       keyword,
       page: nextPage,
-      main: checkedMainStates,
-      sub: checkedSubStates,
+      main: selectedMainOptions,
+      sub: selectedSubOptions,
       isLoadMore: true,
     });
+
+    router.push({
+      pathname: "/results",
+      query: {
+        ...router.query,
+        page: String(nextPage),
+      },
+    });
+  };
+
+  // 距離/オプションが変わった時
+  const handleDistanceChange = (val) => {
+    setRange(val);
+  };
+  const handleMainOptionsChange = (updated) => {
+    setSelectedMainOptions(updated);
+  };
+  const handleSubOptionsChange = (updated) => {
+    setSelectedSubOptions(updated);
   };
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-      <h1>検索</h1>
+      <h1>レストラン一覧</h1>
+
+      {/* homepage と同様に SearchInput */}
       <SearchInput onSearch={handleSearch} />
 
       <div style={{ display: "flex", marginTop: "2rem" }}>
         <div style={{ flex: 3, marginRight: "1rem" }}>
-          <h2>検索結果一覧</h2>
-          {/* ここをコンポーネント化 */}
-          {restaurants.map((restaurant) => (
-            <Link
-              key={restaurant.id}
-              href={{
-                pathname: "/details",
-                query: { id: restaurant.id },
-              }}
-            >
-              <a style={{ textDecoration: "none", color: "inherit" }}>
-                <div>
-                  <h3>{restaurant.name}</h3>
-                  <img src={restaurant.logo_image} alt={`${restaurant.name} ロゴ`} />
-                  <p>{restaurant.address}</p>
-                  <p>{restaurant.catchPhrase}</p>
-                </div>
-              </a>
-            </Link>
-          ))}
+          <h2>検索結果</h2>
+          {restaurants.length === 0 ? (
+            <p>該当するレストランがありません</p>
+          ) : (
+            restaurants.map((r) => (
+              <Link
+                key={r.id}
+                href={{
+                  pathname: "/details",
+                  query: { id: r.id },
+                }}
+              >
+                <a style={{ textDecoration: "none", color: "inherit" }}>
+                  <div style={{ marginBottom: "1rem" }}>
+                    <h3>{r.name}</h3>
+                    {r.logo_image && (
+                      <img
+                        src={r.logo_image}
+                        alt={r.name}
+                        style={{ width: "120px" }}
+                      />
+                    )}
+                    <p>{r.address}</p>
+                    <p>{r.catchPhrase}</p>
+                  </div>
+                </a>
+              </Link>
+            ))
+          )}
           {hasNextPage && (
             <button onClick={handleLoadMore} style={{ marginTop: "1rem" }}>
               もっと読み込む
@@ -225,11 +282,11 @@ const RestaurantList = () => {
         <div style={{ flex: 1 }}>
           <Options
             selectedDistance={range}
-            onDistanceChange={setRange}
-            onMainOptionsChange={setCheckedMainStates}
-            onSubOptionsChange={setCheckedSubStates}
-            initialMainOptions={checkedMainStates}
-            initialSubOptions={checkedSubStates}
+            onDistanceChange={handleDistanceChange}
+            onMainOptionsChange={handleMainOptionsChange}
+            onSubOptionsChange={handleSubOptionsChange}
+            initialMainOptions={selectedMainOptions}
+            initialSubOptions={selectedSubOptions}
           />
         </div>
       </div>
