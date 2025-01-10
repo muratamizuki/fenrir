@@ -95,24 +95,35 @@ def search_restaurants_random(params: SearchParams):
     else:
         query_params["count"] = "10"
 
-    # クエリ追加
-    for field_name, field_value in params.dict().items():
-        if field_value is not None:
-            query_params[field_name] = str(field_value)
+    # ALLショップ
+    all_shops = []
 
     try:
-        # APIリクエスト
-        response = requests.get(api_url, params=query_params)
-        response.raise_for_status()
-        data = response.json()
+        while True:
+            # APIリクエスト
+            response = requests.get(api_url, params=query_params)
+            response.raise_for_status()
+            data = response.json()
+            
+            # shop一覧を取得
+            shops = data.get("results", {}).get("shop", [])
+            if not shops:
+                break
+            
+            all_shops.extend(shops)
+            
+            # もうデータがない時
+            if len(shops) < 99:
+                break
+            
+            # 次のページのデータを取得
+            query_params["start"] = str(int(query_params.get("start", 1)) + len(shops))
         
-        # shop一覧を取得
-        shops = data.get("results", {}).get("shop", [])
-        if not shops:
+        if not all_shops:
             raise HTTPException(status_code=404, detail="No shops found")
         
         # ランダムに1件選択
-        random_shop = random.choice(shops)
+        random_shop = random.choice(all_shops)
         return random_shop 
         
     except requests.RequestException as e:
