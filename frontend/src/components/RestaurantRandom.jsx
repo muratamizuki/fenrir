@@ -74,10 +74,13 @@ const RestaurantRandom = () => {
       <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-center">
         <Link href="/">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
-            おすすめのお店はこれ！！
+            ランチョイス
           </a>
         </Link>
       </header>
+      <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            おすすめのお店はこれ！！
+      </a>
       <RestaurantDisplay restaurant={restaurant} />
     </div>
   );
