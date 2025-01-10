@@ -203,6 +203,7 @@ const RestaurantList = () => {
     }
     const newPage = currentPage - 1;
 
+    // ページ移動の時の検索
     await fetchRestaurants({
       lat,
       lng,
@@ -227,6 +228,7 @@ const RestaurantList = () => {
     setCurrentPage(newPage);
   };
 
+  // 次のページ
   const handleNextPage = async () => {
 
 
@@ -273,7 +275,7 @@ const RestaurantList = () => {
 
       <div className="flex flex-col md:flex-row gap-8 mt-8">
         <div className="md:w-3/4">
-          <h2 className="text-2xl font-semibold text-pink-600 mb-4">検索結果 (ページ {currentPage})</h2>
+          <h2 className="text-2xl font-semibold text-pink-600 mb-4">(ページ {currentPage})</h2>
 
           {restaurants.length === 0 ? (
             <p className="text-gray-600 text-center py-8">店舗が存在しません</p>

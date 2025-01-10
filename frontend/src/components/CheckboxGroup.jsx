@@ -1,3 +1,4 @@
+// チェックボックスコンポーネント
 import React from "react";
 
 const CheckboxGroup = ({ options, checkedStates, onChange }) => (

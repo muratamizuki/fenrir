@@ -4,7 +4,7 @@ interface SearchInputProps {
   placeholder?: string;
   onSearch: (keyword: string) => void;
 }
-
+// 検索ワードの入力欄
 const SearchInput: React.FC<SearchInputProps> = ({ placeholder = "検索ワードを入力してください", onSearch }) => {
   const [inputValue, setInputValue] = useState("");
 

@@ -1,4 +1,5 @@
 // 親
+// ランダムでお店を表示するやつ、detailとおんなじ感じ
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import RestaurantDisplay from "./RestaurantDisplay";

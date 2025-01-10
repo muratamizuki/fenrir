@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import RestaurantDisplay from "./RestaurantDisplay";
 import Link from "next/link";
 
+
 const RestaurantDetail: React.FC = () => {
   const router = useRouter();
   const [restaurant, setRestaurant] = useState(null);
@@ -17,6 +18,7 @@ const RestaurantDetail: React.FC = () => {
     fetchRestaurantDetails(id as string);
   }, [router.isReady]);
 
+  // IDで検索
   const fetchRestaurantDetails = async (id: string) => {
     try {
       setLoading(true);

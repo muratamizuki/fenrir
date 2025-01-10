@@ -1,5 +1,6 @@
 import React from 'react';
 
+// propsの定義
 interface RestaurantDisplayProps {
   restaurant: {
     name: string;

@@ -17,7 +17,7 @@ const Homepage = () => {
   const handleSearch = (keyword) => {
     console.log("検索ワード:", keyword);
     setSearchKeyword(keyword);
-    handleSubmit(keyword);
+    handleSubmit(keyword); // 送信
   };
 
   const handleDistanceChange = (selectedValue) => {
@@ -25,6 +25,7 @@ const Homepage = () => {
     console.log("選択された距離 (value):", selectedValue);
   };
 
+  // geolocation
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -45,6 +46,7 @@ const Homepage = () => {
     });
   };
 
+  // チェックされだボックス
   const mergeCheckedOptions = (options, states) => {
     return options.reduce((acc, option) => {
       if (states[option.value]) {
@@ -54,6 +56,7 @@ const Homepage = () => {
     }, {});
   };
 
+  // 送信
   const handleSubmit = async (keyword) => {
     try {
       const position = await getCurrentPosition();
