@@ -263,11 +263,13 @@ const RestaurantList = () => {
       <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-center">
         <Link href="/search">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
-            お店一覧
+            ランチョイス
           </a>
         </Link>
       </header>
-
+      <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            お店一覧
+      </a>
       <SearchInput onSearch={(keyword) => {
         setKeyword(keyword);
         handleSubmit(keyword);
@@ -275,7 +277,7 @@ const RestaurantList = () => {
 
       <div className="flex flex-col md:flex-row gap-8 mt-8">
         <div className="md:w-3/4">
-          <h2 className="text-2xl font-semibold text-pink-600 mb-4">(ページ {currentPage})</h2>
+          <h2 className="text-2xl font-semibold text-pink-600 mb-4">ページ {currentPage}</h2>
 
           {restaurants.length === 0 ? (
             <p className="text-gray-600 text-center py-8">店舗が存在しません</p>

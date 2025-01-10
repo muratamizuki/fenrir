@@ -52,10 +52,13 @@ const RestaurantDetail = () => {
       <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-center">
         <Link href="/search">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
-            お店一覧
+            ランチョイス
           </a>
         </Link>
       </header>
+      <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            お店一覧
+      </a>
       <RestaurantDisplay restaurant={restaurant} />
     </div>
   );
