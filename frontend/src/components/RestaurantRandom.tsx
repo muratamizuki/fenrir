@@ -70,15 +70,14 @@ const RestaurantRandom: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-between">
-        <div className="w-1/3"></div>
+      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-center">
         <Link href="/">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
-            らんだむセレクト
+            おすすめのお店はこれ！！
           </a>
         </Link>
       </header>
-    <RestaurantDisplay restaurant={restaurant} />
+      <RestaurantDisplay restaurant={restaurant} />
     </div>
   );
 };

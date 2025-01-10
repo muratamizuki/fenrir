@@ -159,14 +159,14 @@ const RestaurantList = () => {
   };
 
   // 検索
-  const handleSubmit = async (kw) => {
+  const handleSubmit = async (keyword) => {
     try {
       const pos = await getCurrentPosition();
       const payload = {
         lat: pos.latitude,
         lng: pos.longitude,
         range,
-        keyword: kw,
+        keyword: keyword,
         page: "1",
         ...mergeCheckedOptions(mainOptions, selectedMainOptions),
         ...mergeCheckedOptions(subOptions, selectedSubOptions),
@@ -177,7 +177,7 @@ const RestaurantList = () => {
         lat: pos.latitude,
         lng: pos.longitude,
         range,
-        keyword: kw,
+        keyword: keyword,
         page: 1,
         main: selectedMainOptions,
         sub: selectedSubOptions,
@@ -227,12 +227,8 @@ const RestaurantList = () => {
     setCurrentPage(newPage);
   };
 
-  // =============================
-  // 5. 次ページボタン
-  // =============================
   const handleNextPage = async () => {
-    // ここでは特に制限しない or もし totalPages を使うなら if (currentPage >= totalPages) return;
-    // 例: if (currentPage >= totalPages) return;
+
 
     const newPage = currentPage + 1;
     await fetchRestaurants({
@@ -262,8 +258,7 @@ const RestaurantList = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-between">
-        <div className="w-1/3"></div>
+      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-center">
         <Link href="/search">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
             お店一覧
@@ -271,9 +266,9 @@ const RestaurantList = () => {
         </Link>
       </header>
 
-      <SearchInput onSearch={(kw) => {
-        setKeyword(kw);
-        handleSubmit(kw);
+      <SearchInput onSearch={(keyword) => {
+        setKeyword(keyword);
+        handleSubmit(keyword);
       }} />
 
       <div className="flex flex-col md:flex-row gap-8 mt-8">

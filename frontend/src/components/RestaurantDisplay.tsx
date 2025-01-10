@@ -53,4 +53,3 @@ const RestaurantDisplay: React.FC<RestaurantDisplayProps> = ({ restaurant }) => 
 };
 
 export default RestaurantDisplay;
-
