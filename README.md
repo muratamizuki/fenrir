@@ -34,6 +34,10 @@
 1. **Dockerコンテナを構築**:
    ```zsh
    docker-compose build
+
+僕の環境だと100秒くらいかかったのでもし他にやることがなければTwitterとかyoutube見ててください
+これとか時間もちょうど良くておすすめです。https://youtu.be/DqoVbYPIdRQ?si=6HuQNSH-xPQnRLzS
+
 2. **Dockerコンテナを起動**
     ```zsh
     docker-compose up 
