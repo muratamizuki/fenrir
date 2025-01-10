@@ -87,7 +87,7 @@ const Homepage = () => {
         <div className="w-1/3"></div>
         <Link href="/">
           <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
-            らんだむ検索
+            ランチョイス
           </a>
         </Link>
         <div className="w-1/3 flex justify-end">
@@ -98,6 +98,9 @@ const Homepage = () => {
           </Link>
         </div>
       </header>
+      <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            らんだむチョイスモード
+      </a>
       <SearchInput onSearch={handleSearch} />
       <Options
         selectedDistance={selectedDistance}
