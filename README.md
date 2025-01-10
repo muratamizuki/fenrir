@@ -1,7 +1,10 @@
 # ランチョイス
 
+##実行の際用意いただくもの
+リクルートWEBサービスのホットペッパー グルメサーチAPI
+https://webservice.recruit.co.jp/doc/hotpepper/reference.html
 
-
+を用意してbackendディレクトリ下に.env.sampleを参考に.envを作成してください
 ---
 
 ## 主な機能
@@ -17,7 +20,6 @@
 
 - **React**
 - **Next.js**
-- **TypeScript**
 - **TailwindCSS**
 
 ### バックエンド
