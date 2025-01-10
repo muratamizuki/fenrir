@@ -41,6 +41,7 @@ export const subOptions = [
   { value: "ktai", label: "携帯電話OK" },
 ];
 
+
 const Options = ({
   selectedDistance,
   onDistanceChange,
@@ -51,14 +52,16 @@ const Options = ({
 }) => {
   const [showMainOptions, setShowMainOptions] = useState(false);
   const [showSubOptions, setShowSubOptions] = useState(false);
-
+  
+  // 初期化
   const [checkedMainStates, setCheckedMainStates] = useState(
     mainOptions.reduce((acc, option) => {
       acc[option.value] = initialMainOptions[option.value] || false;
       return acc;
     }, {})
   );
-
+  
+  // 上に同じ
   const [checkedSubStates, setCheckedSubStates] = useState(
     subOptions.reduce((acc, option) => {
       acc[option.value] = initialSubOptions[option.value] || false;
@@ -66,6 +69,7 @@ const Options = ({
     }, {})
   );
 
+  // チェックされた
   const handleMainCheckboxChange = (value) => {
     setCheckedMainStates((prev) => {
       const updated = { ...prev, [value]: !prev[value] };
@@ -74,6 +78,7 @@ const Options = ({
     });
   };
 
+  // 上に
   const handleSubCheckboxChange = (value) => {
     setCheckedSubStates((prev) => {
       const updated = { ...prev, [value]: !prev[value] };

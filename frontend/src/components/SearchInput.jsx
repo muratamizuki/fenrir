@@ -1,17 +1,15 @@
 import React, { useState } from "react";
 
-interface SearchInputProps {
-  placeholder?: string;
-  onSearch: (keyword: string) => void;
-}
 // 検索ワードの入力欄
-const SearchInput: React.FC<SearchInputProps> = ({ placeholder = "検索ワードを入力してください", onSearch }) => {
+const SearchInput = ({ placeholder = "検索ワードを入力してください", onSearch }) => {
   const [inputValue, setInputValue] = useState("");
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // 入力値が変更されたときに呼び出される
+  const handleInputChange = (event) => {
     setInputValue(event.target.value);
   };
 
+  // 検索ボタンがクリックされたときに呼び出される
   const handleSearch = () => {
     if (onSearch) {
       onSearch(inputValue);
@@ -38,4 +36,3 @@ const SearchInput: React.FC<SearchInputProps> = ({ placeholder = "検索ワー�
 };
 
 export default SearchInput;
-

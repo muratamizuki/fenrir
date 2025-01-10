@@ -4,22 +4,21 @@ import { useRouter } from "next/router";
 import RestaurantDisplay from "./RestaurantDisplay";
 import Link from "next/link";
 
-
-const RestaurantDetail: React.FC = () => {
+const RestaurantDetail = () => {
   const router = useRouter();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!router.isReady) return;
 
     const { id } = router.query;
-    fetchRestaurantDetails(id as string);
+    fetchRestaurantDetails(id);
   }, [router.isReady]);
 
   // IDで検索
-  const fetchRestaurantDetails = async (id: string) => {
+  const fetchRestaurantDetails = async (id) => {
     try {
       setLoading(true);
       const response = await fetch(`http://localhost:8000/search/hotpepper-restaurants/detail?id=${id}`);
@@ -57,10 +56,9 @@ const RestaurantDetail: React.FC = () => {
           </a>
         </Link>
       </header>
-    <RestaurantDisplay restaurant={restaurant} />
+      <RestaurantDisplay restaurant={restaurant} />
     </div>
   );
 };
 
 export default RestaurantDetail;
-

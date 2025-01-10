@@ -1,29 +1,8 @@
+// 詳細表示コンポーネント
 import React from 'react';
 
 // propsの定義
-interface RestaurantDisplayProps {
-  restaurant: {
-    name: string;
-    logo_image: string;
-    address: string;
-    access: string;
-    genre: {
-      name: string;
-      catch: string;
-    };
-    open: string;
-    budget: {
-      average: string;
-    };
-    catch: string;
-    non_smoking: string;
-    wifi: string;
-    parking: string;
-    shop_detail_memo?: string;
-  };
-}
-
-const RestaurantDisplay: React.FC<RestaurantDisplayProps> = ({ restaurant }) => {
+const RestaurantDisplay = ({ restaurant }) => {
   const googleMapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`;
 
   return (

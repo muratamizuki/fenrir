@@ -7,11 +7,11 @@ import Link from "next/link";
 
 const PAGE_SIZE = 100;
 
-const RestaurantRandom: React.FC = () => {
+const RestaurantRandom = () => {
   const router = useRouter();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -25,7 +25,7 @@ const RestaurantRandom: React.FC = () => {
       Object.entries(query).reduce((acc, [key, value]) => {
         acc[key] = String(value);
         return acc;
-      }, {} as Record<string, string>)
+      }, {})
     ).toString();
 
     console.log("Generated Query String:", queryString);
@@ -33,7 +33,7 @@ const RestaurantRandom: React.FC = () => {
     fetchRestaurant(queryString);
   }, [router.isReady, router.query]);
 
-  const fetchRestaurant = async (queryString: string) => {
+  const fetchRestaurant = async (queryString) => {
     try {
       setLoading(true);
       const url = `http://localhost:8000/search/hotpepper-restaurants/random?${queryString}`;
