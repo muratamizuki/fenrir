@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import DistanceSelector from "./DistanceSelector";
 import CheckboxGroup from "./CheckboxGroup";
 
-// オプション定義
+// オプションの定義
 export const mainOptions = [
   { value: "free_food", label: "食べ放題" },
   { value: "free_drink", label: "飲み放題" },
@@ -49,7 +49,9 @@ const Options = ({
   initialMainOptions = {},
   initialSubOptions = {},
 }) => {
-  // チェックボックスの状態管理
+  const [showMainOptions, setShowMainOptions] = useState(false);
+  const [showSubOptions, setShowSubOptions] = useState(false);
+
   const [checkedMainStates, setCheckedMainStates] = useState(
     mainOptions.reduce((acc, option) => {
       acc[option.value] = initialMainOptions[option.value] || false;
@@ -64,7 +66,6 @@ const Options = ({
     }, {})
   );
 
-  // メインオプションの状態
   const handleMainCheckboxChange = (value) => {
     setCheckedMainStates((prev) => {
       const updated = { ...prev, [value]: !prev[value] };
@@ -73,7 +74,6 @@ const Options = ({
     });
   };
 
-  // サブオプションの状態
   const handleSubCheckboxChange = (value) => {
     setCheckedSubStates((prev) => {
       const updated = { ...prev, [value]: !prev[value] };
@@ -83,8 +83,8 @@ const Options = ({
   };
 
   return (
-    <div>
-      <h2>距離</h2>
+    <div className="bg-pink-50 p-6 rounded-3xl shadow-lg">
+      <h2 className="text-2xl font-bold mb-4 text-pink-600">距離</h2>
       <DistanceSelector
         options={[
           { value: "1", label: "300m" },
@@ -97,19 +97,41 @@ const Options = ({
         onChange={onDistanceChange}
       />
 
-      <h3>メインオプション</h3>
-      <CheckboxGroup
-        options={mainOptions}
-        checkedStates={checkedMainStates}
-        onChange={handleMainCheckboxChange}
-      />
+      <div className="mt-6">
+        <h3
+          onClick={() => setShowMainOptions((prev) => !prev)}
+          className="text-xl font-semibold mb-2 text-pink-500 cursor-pointer hover:text-pink-600 transition-colors"
+        >
+          メインオプション {showMainOptions ? "▼" : "▶"}
+        </h3>
+        {showMainOptions && (
+          <div className="bg-white p-4 rounded-2xl">
+            <CheckboxGroup
+              options={mainOptions}
+              checkedStates={checkedMainStates}
+              onChange={handleMainCheckboxChange}
+            />
+          </div>
+        )}
+      </div>
 
-      <h3>サブオプション</h3>
-      <CheckboxGroup
-        options={subOptions}
-        checkedStates={checkedSubStates}
-        onChange={handleSubCheckboxChange}
-      />
+      <div className="mt-6">
+        <h3
+          onClick={() => setShowSubOptions((prev) => !prev)}
+          className="text-xl font-semibold mb-2 text-pink-500 cursor-pointer hover:text-pink-600 transition-colors"
+        >
+          サブオプション {showSubOptions ? "▼" : "▶"}
+        </h3>
+        {showSubOptions && (
+          <div className="bg-white p-4 rounded-2xl">
+            <CheckboxGroup
+              options={subOptions}
+              checkedStates={checkedSubStates}
+              onChange={handleSubCheckboxChange}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

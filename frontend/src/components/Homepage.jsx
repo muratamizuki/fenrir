@@ -2,34 +2,29 @@
 // ランダム検索
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import Options from "./Options";
 import SearchInput from "./SearchInput";
 import { mainOptions, subOptions } from "./Options";
-
 
 const Homepage = () => {
   const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedDistance, setSelectedDistance] = useState("3");
-
-  // 選択されたオプションのステートを保持
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
   const [selectedSubOptions, setSelectedSubOptions] = useState({});
 
-  // 検索ワードの変更
   const handleSearch = (keyword) => {
     console.log("検索ワード:", keyword);
     setSearchKeyword(keyword);
-    handleSubmit(keyword); // 送信
+    handleSubmit(keyword);
   };
 
-  // 距離が変わった時
   const handleDistanceChange = (selectedValue) => {
     setSelectedDistance(selectedValue);
     console.log("選択された距離 (value):", selectedValue);
   };
 
-  // Geolocation
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -50,7 +45,6 @@ const Homepage = () => {
     });
   };
 
-  // チェックされたオプションを統合
   const mergeCheckedOptions = (options, states) => {
     return options.reduce((acc, option) => {
       if (states[option.value]) {
@@ -60,23 +54,21 @@ const Homepage = () => {
     }, {});
   };
 
-  // 送信
   const handleSubmit = async (keyword) => {
     try {
-      const position = await getCurrentPosition(); // 現在位置を取得
+      const position = await getCurrentPosition();
 
       const payload = {
-        lat: position.latitude, // 緯度
-        lng: position.longitude, // 経度
-        range: selectedDistance, // 距離
-        keyword: keyword, // 検索キーワード
-        ...mergeCheckedOptions(mainOptions, selectedMainOptions), // メインオプション
-        ...mergeCheckedOptions(subOptions, selectedSubOptions), // サブオプション
+        lat: position.latitude,
+        lng: position.longitude,
+        range: selectedDistance,
+        keyword: keyword,
+        ...mergeCheckedOptions(mainOptions, selectedMainOptions),
+        ...mergeCheckedOptions(subOptions, selectedSubOptions),
       };
 
       console.log("送信データ:", payload);
 
-      // 検索結果ページへ遷移
       router.push({
         pathname: "/randomresults",
         query: payload,
@@ -87,15 +79,29 @@ const Homepage = () => {
   };
 
   return (
-    <div>
-      <h1>ランダム検索</h1>
+    <div className="container mx-auto px-4">
+      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-between">
+        <div className="w-1/3"></div>
+        <Link href="/">
+          <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            らんだむ検索
+          </a>
+        </Link>
+        <div className="w-1/3 flex justify-end">
+          <Link href="/search">
+            <a className="px-4 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors duration-300">
+              普通の検索はこっち！！
+            </a>
+          </Link>
+        </div>
+      </header>
       <SearchInput onSearch={handleSearch} />
-
       <Options
         selectedDistance={selectedDistance}
         onDistanceChange={handleDistanceChange}
         onMainOptionsChange={setSelectedMainOptions}
         onSubOptionsChange={setSelectedSubOptions}
+        className="flex-shrink-0"
       />
     </div>
   );

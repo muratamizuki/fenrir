@@ -8,27 +8,27 @@ import { mainOptions, subOptions } from "./Options";
 
 const PAGE_SIZE = 10;
 
-// geolocation
+// Geolocation
 const getCurrentPosition = () => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error("Geolocation is error"));
     }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      (pos) => {
         resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
         });
       },
-      (error) => {
-        reject(new Error(`error: ${error.message}`));
+      (err) => {
+        reject(new Error(`error: ${err.message}`));
       }
     );
   });
 };
 
-// チェック
+// オプションを統合
 const mergeCheckedOptions = (optionsArray, states) => {
   return optionsArray.reduce((acc, option) => {
     if (states[option.value]) {
@@ -41,47 +41,24 @@ const mergeCheckedOptions = (optionsArray, states) => {
 const RestaurantList = () => {
   const router = useRouter();
 
+  // 検索
   const [keyword, setKeyword] = useState("");
   const [range, setRange] = useState("3");
-
-  // メイン/サブオプション
   const [selectedMainOptions, setSelectedMainOptions] = useState({});
   const [selectedSubOptions, setSelectedSubOptions] = useState({});
 
+  // 結果表示
   const [restaurants, setRestaurants] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(true);
 
-  // lat, lng
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
-
-  // ページング
-  const [items, setItems] = useState([]);
+  // ページング関連
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // 位置情報
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
 
-  useEffect(() => {
-    fetchItems(currentPage);
-  }, [currentPage]);
-
-  // 
-  const fetchItems = async (page) => {
-    const res = await fetch(`/api/items?page=${page}`);
-    const data = await res.json();
-    setItems(data.items);
-    setTotalPages(data.totalPages);
-  };
-
-  // ページ番号
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
-
-  // チェックボックスの引き継ぎ
+  // 初回クエリ
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -98,9 +75,12 @@ const RestaurantList = () => {
     if (qLng) setLng(qLng);
     if (qRange) setRange(qRange);
     if (qKeyword) setKeyword(qKeyword);
-    if (qPage) setPage(Number(qPage) || 1);
 
-    // メインオプション復元
+    if (qPage) {
+      setCurrentPage(Number(qPage) || 1);
+    }
+
+    // メイン/サブオプション復元
     const mainTemp = {};
     mainOptions.forEach((opt) => {
       if (rest[opt.value] === "1") {
@@ -109,7 +89,6 @@ const RestaurantList = () => {
     });
     setSelectedMainOptions(mainTemp);
 
-    // サブオプション復元
     const subTemp = {};
     subOptions.forEach((opt) => {
       if (rest[opt.value] === "1") {
@@ -118,7 +97,7 @@ const RestaurantList = () => {
     });
     setSelectedSubOptions(subTemp);
 
-    // fetch
+    // API呼び出し
     fetchRestaurants({
       lat: qLat || "",
       lng: qLng || "",
@@ -127,11 +106,10 @@ const RestaurantList = () => {
       page: qPage ? Number(qPage) : 1,
       main: mainTemp,
       sub: subTemp,
-      isLoadMore: false,
     });
   }, [router.isReady]);
 
-  // apiよび
+
   const fetchRestaurants = async ({
     lat,
     lng,
@@ -140,7 +118,6 @@ const RestaurantList = () => {
     page,
     main,
     sub,
-    isLoadMore = false,
   }) => {
     try {
       const payload = {
@@ -156,192 +133,207 @@ const RestaurantList = () => {
 
       const qs = new URLSearchParams(payload).toString();
       const url = `http://localhost:8000/search/hotpepper-restaurants?${qs}`;
-
       console.log("Fetch URL:", url);
+
       const res = await fetch(url);
       if (!res.ok) {
         throw new Error("Failed to fetch restaurants");
       }
-      const data = await res.json();
-      console.log("APIレスポンス:", data);
 
-      if (isLoadMore) {
-        setRestaurants((prev) => [...prev, ...data.restaurants]);
+      const data = await res.json();
+      
+
+      // 上書き
+      setRestaurants(data.restaurants || []);
+
+      // totalPages
+      if (data.totalPages) {
+        setTotalPages(data.totalPages);
       } else {
-        setRestaurants(data.restaurants || []);
+        setTotalPages(1);
       }
-      setHasNextPage((data.restaurants || []).length === PAGE_SIZE);
     } catch (error) {
-      console.error("API呼び出し失敗:", error);
+      console.error("API Error:", error);
+      setRestaurants([]);
     }
   };
 
-  const handleSubmit = async (keyword) => {
+  // 検索
+  const handleSubmit = async (kw) => {
     try {
-      const position = await getCurrentPosition();
+      const pos = await getCurrentPosition();
       const payload = {
-        lat: position.latitude,
-        lng: position.longitude,
+        lat: pos.latitude,
+        lng: pos.longitude,
         range,
-        keyword: keyword,
+        keyword: kw,
         page: "1",
         ...mergeCheckedOptions(mainOptions, selectedMainOptions),
         ...mergeCheckedOptions(subOptions, selectedSubOptions),
       };
 
-      // API再fetch
+      // API
       await fetchRestaurants({
-        lat: position.latitude,
-        lng: position.longitude,
+        lat: pos.latitude,
+        lng: pos.longitude,
         range,
-        keyword: keyword,
+        keyword: kw,
         page: 1,
         main: selectedMainOptions,
         sub: selectedSubOptions,
-        isLoadMore: false,
       });
 
-      // URL 更新
+      // URL
       router.push({
         pathname: "/results",
         query: payload,
       });
-      console.log("送信データ:", payload);
+      setCurrentPage(1);
     } catch (err) {
-      console.error("位置情報取得 or API呼び出し失敗:", err);
+      console.error("Geo or API err:", err);
       alert("位置情報が取得できませんでした");
     }
   };
 
-  // 送信
-  const handleSearch = (keyword) => {
-    console.log("検索ワード:", keyword);
-    setKeyword(keyword);
-    handleSubmit(keyword);
-  };
-
-  // 「もっと読み込む」
-  const handleLoadMore = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
+  // 4. 前ページボタン
+  const handlePrevPage = async () => {
+    if (currentPage <= 1) {
+      // クエリが1のとき戻れない
+      return; 
+    }
+    const newPage = currentPage - 1;
 
     await fetchRestaurants({
       lat,
       lng,
       range,
       keyword,
-      page: nextPage,
+      page: newPage,
       main: selectedMainOptions,
       sub: selectedSubOptions,
-      isLoadMore: true,
     });
-
     router.push({
       pathname: "/results",
       query: {
-        ...router.query,
-        page: String(nextPage),
+        lat,
+        lng,
+        range,
+        keyword,
+        page: String(newPage),
+        ...mergeCheckedOptions(mainOptions, selectedMainOptions),
+        ...mergeCheckedOptions(subOptions, selectedSubOptions),
       },
     });
+    setCurrentPage(newPage);
   };
 
-  // 距離/オプションが変わった時
-  const handleDistanceChange = (val) => {
-    setRange(val);
+  // =============================
+  // 5. 次ページボタン
+  // =============================
+  const handleNextPage = async () => {
+    // ここでは特に制限しない or もし totalPages を使うなら if (currentPage >= totalPages) return;
+    // 例: if (currentPage >= totalPages) return;
+
+    const newPage = currentPage + 1;
+    await fetchRestaurants({
+      lat,
+      lng,
+      range,
+      keyword,
+      page: newPage,
+      main: selectedMainOptions,
+      sub: selectedSubOptions,
+    });
+    router.push({
+      pathname: "/results",
+      query: {
+        lat,
+        lng,
+        range,
+        keyword,
+        page: String(newPage),
+        ...mergeCheckedOptions(mainOptions, selectedMainOptions),
+        ...mergeCheckedOptions(subOptions, selectedSubOptions),
+      },
+    });
+    setCurrentPage(newPage);
   };
-  const handleMainOptionsChange = (updated) => {
-    setSelectedMainOptions(updated);
-  };
-  const handleSubOptionsChange = (updated) => {
-    setSelectedSubOptions(updated);
-  };
+
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "1rem" }}>
-      <h1>レストラン一覧</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-between">
+        <div className="w-1/3"></div>
+        <Link href="/search">
+          <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            お店一覧
+          </a>
+        </Link>
+      </header>
 
-      <SearchInput onSearch={handleSearch} />
-      {/* コンポーネント化しなきゃいけないよ〜、期限〜が〜近いよ〜期限が近いよ〜近いよ期限、期限が近いよ〜 */}
-      <div style={{ display: "flex", marginTop: "2rem" }}>
-        <div style={{ flex: 3, marginRight: "1rem" }}>
-          <h2>検索結果</h2>
+      <SearchInput onSearch={(kw) => {
+        setKeyword(kw);
+        handleSubmit(kw);
+      }} />
+
+      <div className="flex flex-col md:flex-row gap-8 mt-8">
+        <div className="md:w-3/4">
+          <h2 className="text-2xl font-semibold text-pink-600 mb-4">検索結果 (ページ {currentPage})</h2>
+
           {restaurants.length === 0 ? (
-            <p>該当するレストランがありません</p>
+            <p className="text-gray-600 text-center py-8">店舗が存在しません</p>
           ) : (
-            restaurants.map((r) => (
-              <Link
-                key={r.id}
-                href={{
-                  pathname: "/details",
-                  query: { id: r.id },
-                }}
-              >
-                <a style={{ textDecoration: "none", color: "inherit" }}>
-                  <div style={{ marginBottom: "1rem" }}>
-                    <h3>{r.name}</h3>
-                    {r.logo_image && (
-                      <img
-                        src={r.logo_image}
-                        alt={r.name}
-                        style={{ width: "120px" }}
-                      />
-                    )}
-                    <p>{r.address}</p>
-                    <p>{r.catchPhrase}</p>
-                  </div>
-                </a>
-              </Link>
-            ))
+            <div className="space-y-6">
+              {restaurants.map((r) => (
+                <Link key={r.id} href={{ pathname: "/details", query: { id: r.id } }}>
+                  <a className="block bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold text-pink-600 mb-2">{r.name}</h3>
+                      <div className="flex items-center space-x-4">
+                        {r.logo_image && (
+                          <img
+                            src={r.logo_image}
+                            alt={r.name}
+                            ganre={r.ganre}
+                            
+                            className="w-24 h-24 object-cover rounded-full"
+                          />
+                        )}
+                        <div>
+                          <p className="text-gray-600">{r.address}</p>
+                          <p className="text-gray-500 mt-1">{r.catchPhrase}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                </Link>
+              ))}
+            </div>
           )}
-          {hasNextPage && (
-            <button onClick={handleLoadMore} style={{ marginTop: "1rem" }}>
-              もっと読み込む
+
+          <div className="flex justify-center space-x-4 mt-8">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage <= 1}
+              className="px-4 py-2 bg-pink-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-pink-600 transition-colors duration-300"
+            >
+              前のページ
             </button>
-          )}
-          <h2>Pagination Example</h2>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>{item.name}</li>
-        ))}
-      </ul>
-
-      {/* 前へ */}
-      <button
-        disabled={currentPage <= 1}
-        onClick={() => setCurrentPage(currentPage - 1)}
-      >
-        前のページ
-      </button>
-
-      {/* 番号 */}
-      {pageNumbers.map((num) => (
-        <button
-          key={num}
-          style={{
-            fontWeight: currentPage === num ? "bold" : "normal",
-            margin: "0 2px",
-          }}
-          onClick={() => setCurrentPage(num)}
-        >
-          {num}
-        </button>
-      ))}
-
-      {/* 次のページ */}
-      <button
-        disabled={currentPage >= totalPages}
-        onClick={() => setCurrentPage(currentPage + 1)}
-      >
-        次のページ
-      </button>
+            <button
+              onClick={handleNextPage}
+              className="px-4 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors duration-300"
+            >
+              次のページ
+            </button>
+          </div>
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div className="md:w-1/4">
           <Options
             selectedDistance={range}
-            onDistanceChange={handleDistanceChange}
-            onMainOptionsChange={handleMainOptionsChange}
-            onSubOptionsChange={handleSubOptionsChange}
+            onDistanceChange={setRange}
+            onMainOptionsChange={setSelectedMainOptions}
+            onSubOptionsChange={setSelectedSubOptions}
             initialMainOptions={selectedMainOptions}
             initialSubOptions={selectedSubOptions}
           />

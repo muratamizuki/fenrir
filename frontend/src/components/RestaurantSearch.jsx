@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Options from "./Options";
+import Link from 'next/link';
 import SearchInput from "./SearchInput";
 import { mainOptions, subOptions } from "./Options";
 
@@ -86,15 +87,29 @@ const RestaurantSearch = () => {
   };
 
   return (
-    <div>
-      <h1>検索</h1>
+    <div className="container mx-auto px-4">
+      <header className="bg-pink-100 rounded-t-3xl p-6 mb-8 shadow-md flex items-center justify-between">
+        <div className="w-1/3"></div>
+        <Link href="/search">
+          <a className="text-3xl font-bold text-pink-600 text-center hover:text-pink-700 transition-colors duration-300">
+            お店検索
+          </a>
+        </Link>
+        <div className="w-1/3 flex justify-end">
+          <Link href="/">
+            <a className="px-4 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors duration-300">
+              らんだむ検索はこっち！！
+            </a>
+          </Link>
+        </div>
+      </header>
       <SearchInput onSearch={handleSearch} />
-
       <Options
         selectedDistance={selectedDistance}
         onDistanceChange={handleDistanceChange}
         onMainOptionsChange={setSelectedMainOptions}
         onSubOptionsChange={setSelectedSubOptions}
+        className="flex-shrink-0"
       />
     </div>
   );

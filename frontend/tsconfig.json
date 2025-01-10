@@ -17,6 +17,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "tailwind.config.js", "postcss.config.js", "src/components/RestaurantSearch.jsx", "src/components/Homepage.jsx"],
   "exclude": ["node_modules"]
 }
